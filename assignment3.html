@@ -1,0 +1,458 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid #e0e0e0;background:#fff;}
+.tab{padding:7px 16px;font-size:13px;border-radius:20px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer;color:#555;font-family:sans-serif;}
+.tab.active{background:#1a73e8;color:#fff;border-color:#1a73e8;font-weight:500;}
+.panel {
+  display: none;
+  padding: 16px;
+  width: 100%;
+  min-height: 85vh; /* Ensures there is vertical space to center within */
+  flex-direction: column;
+  align-items: center;    /* Centers horizontally */
+  justify-content: center; /* Centers vertically */
+}
+
+.panel.active {
+  display: flex; /* Changed from 'block' to 'flex' */
+}
+</style>
+
+<div class="tabs" id="tabBar">
+  <button class="tab active" data-tab="t1">Donut — Rep vs Total</button>
+  <button class="tab" data-tab="t2">Streamgraph — Item over Time</button>
+  <button class="tab" data-tab="t3">Trellis Histogram</button>
+  <button class="tab" data-tab="t4">Units vs Cost</button>
+  <button class="tab" data-tab="t5">Sales by Region</button>
+  <button class="tab" data-tab="t6">All Views</button>
+  <div class="navbar">
+  </div>
+
+<div class="nav-hint">
+  Click any tab to view the plot or use the <b>keyboard arrow keys</b> to toggle.
+</div>
+</div>
+<div id="t1" class="panel active"><div id="v1"></div></div>
+<div id="t2" class="panel"><div id="v2"></div></div>
+<div id="t3" class="panel"><div id="v3"></div></div>
+<div id="t4" class="panel"><div id="v4"></div></div>
+<div id="t5" class="panel"><div id="v5"></div></div>
+<div id="t6" class="panel"><div id="v6"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/vega@6.2.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@7.1.0"></script>
+<script>
+const values=[
+  {"OrderDate":"1/6/21","Region":"East","Rep":"Jones","Item":"Pencil","Units":95,"Unit Cost":1.99,"Total":189.05},
+  {"OrderDate":"1/23/21","Region":"Central","Rep":"Kivell","Item":"Binder","Units":50,"Unit Cost":19.99,"Total":999.5},
+  {"OrderDate":"2/9/21","Region":"Central","Rep":"Jardine","Item":"Pencil","Units":36,"Unit Cost":4.99,"Total":179.64},
+  {"OrderDate":"2/26/21","Region":"Central","Rep":"Gill","Item":"Pen","Units":27,"Unit Cost":19.99,"Total":539.73},
+  {"OrderDate":"3/15/21","Region":"West","Rep":"Sorvino","Item":"Pencil","Units":56,"Unit Cost":2.99,"Total":167.44},
+  {"OrderDate":"4/1/21","Region":"East","Rep":"Jones","Item":"Binder","Units":60,"Unit Cost":4.99,"Total":299.4},
+  {"OrderDate":"4/18/21","Region":"Central","Rep":"Andrews","Item":"Pencil","Units":75,"Unit Cost":1.99,"Total":149.25},
+  {"OrderDate":"5/5/21","Region":"Central","Rep":"Jardine","Item":"Pencil","Units":90,"Unit Cost":4.99,"Total":449.1},
+  {"OrderDate":"5/22/21","Region":"West","Rep":"Thompson","Item":"Pencil","Units":32,"Unit Cost":1.99,"Total":63.68},
+  {"OrderDate":"6/8/21","Region":"East","Rep":"Jones","Item":"Binder","Units":60,"Unit Cost":8.99,"Total":539.4},
+  {"OrderDate":"6/25/21","Region":"Central","Rep":"Morgan","Item":"Pencil","Units":90,"Unit Cost":4.99,"Total":449.1},
+  {"OrderDate":"7/12/21","Region":"East","Rep":"Howard","Item":"Binder","Units":29,"Unit Cost":1.99,"Total":57.71},
+  {"OrderDate":"7/29/21","Region":"East","Rep":"Parent","Item":"Binder","Units":81,"Unit Cost":19.99,"Total":1619.19},
+  {"OrderDate":"8/15/21","Region":"East","Rep":"Jones","Item":"Pencil","Units":35,"Unit Cost":4.99,"Total":174.65},
+  {"OrderDate":"9/1/21","Region":"Central","Rep":"Smith","Item":"Desk","Units":2,"Unit Cost":125.0,"Total":250.0},
+  {"OrderDate":"9/18/21","Region":"East","Rep":"Jones","Item":"Pen Set","Units":16,"Unit Cost":15.99,"Total":255.84},
+  {"OrderDate":"10/5/21","Region":"Central","Rep":"Morgan","Item":"Binder","Units":28,"Unit Cost":8.99,"Total":251.72},
+  {"OrderDate":"10/22/21","Region":"East","Rep":"Jones","Item":"Pen","Units":64,"Unit Cost":8.99,"Total":575.36},
+  {"OrderDate":"11/8/21","Region":"East","Rep":"Parent","Item":"Pen","Units":15,"Unit Cost":19.99,"Total":299.85},
+  {"OrderDate":"11/25/21","Region":"Central","Rep":"Kivell","Item":"Pen Set","Units":96,"Unit Cost":4.99,"Total":479.04},
+  {"OrderDate":"12/12/21","Region":"Central","Rep":"Smith","Item":"Pencil","Units":67,"Unit Cost":1.29,"Total":86.43},
+  {"OrderDate":"12/29/21","Region":"East","Rep":"Parent","Item":"Pen Set","Units":74,"Unit Cost":15.99,"Total":1183.26},
+  {"OrderDate":"1/15/22","Region":"Central","Rep":"Gill","Item":"Binder","Units":46,"Unit Cost":8.99,"Total":413.54},
+  {"OrderDate":"2/1/22","Region":"Central","Rep":"Smith","Item":"Binder","Units":87,"Unit Cost":15.0,"Total":1305.0},
+  {"OrderDate":"2/18/22","Region":"East","Rep":"Jones","Item":"Binder","Units":4,"Unit Cost":4.99,"Total":19.96},
+  {"OrderDate":"3/7/22","Region":"West","Rep":"Sorvino","Item":"Binder","Units":7,"Unit Cost":19.99,"Total":139.93},
+  {"OrderDate":"3/24/22","Region":"Central","Rep":"Jardine","Item":"Pen Set","Units":50,"Unit Cost":4.99,"Total":249.5},
+  {"OrderDate":"4/10/22","Region":"Central","Rep":"Andrews","Item":"Pencil","Units":66,"Unit Cost":1.99,"Total":131.34},
+  {"OrderDate":"4/27/22","Region":"East","Rep":"Howard","Item":"Pen","Units":96,"Unit Cost":4.99,"Total":479.04},
+  {"OrderDate":"5/14/22","Region":"Central","Rep":"Gill","Item":"Pencil","Units":53,"Unit Cost":1.29,"Total":68.37},
+  {"OrderDate":"5/31/22","Region":"Central","Rep":"Gill","Item":"Binder","Units":80,"Unit Cost":8.99,"Total":719.2},
+  {"OrderDate":"6/17/22","Region":"Central","Rep":"Kivell","Item":"Desk","Units":5,"Unit Cost":125.0,"Total":625.0},
+  {"OrderDate":"7/4/22","Region":"East","Rep":"Jones","Item":"Pen Set","Units":62,"Unit Cost":4.99,"Total":309.38},
+  {"OrderDate":"7/21/22","Region":"Central","Rep":"Morgan","Item":"Pen Set","Units":55,"Unit Cost":12.49,"Total":686.95},
+  {"OrderDate":"8/7/22","Region":"Central","Rep":"Kivell","Item":"Pen Set","Units":42,"Unit Cost":23.95,"Total":1005.9},
+  {"OrderDate":"8/24/22","Region":"West","Rep":"Sorvino","Item":"Desk","Units":3,"Unit Cost":275.0,"Total":825.0},
+  {"OrderDate":"9/10/22","Region":"Central","Rep":"Gill","Item":"Pencil","Units":7,"Unit Cost":1.29,"Total":9.03},
+  {"OrderDate":"9/27/22","Region":"West","Rep":"Sorvino","Item":"Pen","Units":76,"Unit Cost":1.99,"Total":151.24},
+  {"OrderDate":"10/14/22","Region":"Central","Rep":"Thompson","Item":"Binder","Units":57,"Unit Cost":19.99,"Total":1139.43},
+  {"OrderDate":"10/31/22","Region":"Central","Rep":"Andrews","Item":"Pencil","Units":14,"Unit Cost":1.29,"Total":18.06},
+  {"OrderDate":"11/17/22","Region":"Central","Rep":"Jardine","Item":"Binder","Units":11,"Unit Cost":4.99,"Total":54.89},
+  {"OrderDate":"12/4/22","Region":"Central","Rep":"Jardine","Item":"Binder","Units":94,"Unit Cost":19.99,"Total":1879.06},
+  {"OrderDate":"12/21/22","Region":"Central","Rep":"Andrews","Item":"Binder","Units":28,"Unit Cost":4.99,"Total":139.72}
+];
+
+/* 11 unique reps — fully distinct colors, no tableau20 pairing issue */
+const REP_SCALE = {
+  "domain":["Andrews","Gill","Howard","Jardine","Jones","Kivell","Morgan","Parent","Smith","Sorvino","Thompson"],
+  "range": ["#4e79a7","#f28e2b","#e15759","#76b7b2","#59a14f","#edc948","#b07aa1","#ff9da7","#9c755f","#bab0ac","#d37295"]
+};
+
+function getW(){
+  return (document.getElementById("v1").parentElement.clientWidth || 800) - 32;
+}
+
+function makeSpecs(w){
+  return {
+    t1: {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "title": {
+  "text": "Representative Sales Performance",
+  "subtitle": [
+    "Analysis of total revenue generated by each sales representative (Donut View)",
+    "Hover over slices for more details"
+  ],
+  "fontSize": 24,
+  "subtitleFontSize": 14,
+  "anchor": "middle",
+  "offset": 20
+},
+      "data": {"values": values},
+      "width": 1000, 
+      "height": 750,
+      "transform": [
+        {"aggregate": [{"op": "sum", "field": "Total", "as": "TotalSum"}], "groupby": ["Rep"]}
+      ],
+      "layer": [
+        {
+          "mark": {
+            "type": "arc", 
+            "innerRadius": 160, 
+            "outerRadius": 320, 
+            "stroke": "white", 
+            "strokeWidth": 2
+          },
+          "encoding": {
+            "theta": {"field": "TotalSum", "type": "quantitative", "stack": true},
+            "color": {
+              "field": "Rep", 
+              "type": "nominal", 
+              "scale": REP_SCALE, 
+              "legend": {"orient": "right", "labelFontSize": 14, "titleFontSize": 16}
+            },
+            "order": {"field": "Rep", "type": "nominal"},
+            "tooltip": [{"field": "Rep"}, {"field": "TotalSum", "title": "Total", "format": "$.2f"}]
+          }
+        },
+        {
+          "mark": {
+            "type": "text", 
+            "radius": 240, 
+            "angle": -45,
+            "fontSize": 18, 
+            "fontWeight": "bold",
+            "baseline": "middle",
+            "align": "center",
+            "stroke": "black", 
+            "strokeWidth": 0.8
+          },
+          "encoding": {
+            "theta": {"field": "TotalSum", "type": "quantitative", "stack": true},
+            "text": {"field": "Rep", "type": "nominal"},
+            "color": {"value": "white"},
+            "order": {"field": "Rep", "type": "nominal"},
+            
+          }
+        }
+      ],
+      "config": {
+  "view": {"stroke": null},
+  "autosize": {"type": "fit", "contains": "padding"}
+}
+    },
+    t2:{
+      "$schema":"https://vega.github.io/schema/vega-lite/v5.json",
+      "title": {
+  "text": "Item Sales Trend",
+        "subtitle": [
+          "Monthly revenue fluctuations across different office supply categories",
+          "Hover over the stream layers to see item categories and monthly totals"
+        ],
+  "fontSize": 24,
+  "subtitleFontSize": 14,
+  "anchor": "middle",
+  "offset": 20
+},
+      "data":{"values":values},
+      "width":1366,"height":400,
+      "transform":[{"impute":"Total","key":"OrderDate","groupby":["Item"],"value":0}],
+      "layer":[
+        {
+          "mark":{"type":"area","interpolate":"monotone","stroke":"white","strokeWidth":1},
+          "encoding":{
+            "x":{"timeUnit":"yearmonth","field":"OrderDate","title":"Month"},
+            "y":{"aggregate":"sum","field":"Total","stack":"center","axis":null},
+            "color":{"field":"Item","type":"nominal","legend":null,"scale":{"scheme":"tableau20"}},
+            "tooltip":[{"field":"Item"},{"field":"Total","aggregate":"sum","format":"$.2f"}]
+          }
+        },
+        {
+          "mark":{"type":"text","fontSize":16,"fontWeight":"bold","baseline":"middle","align":"center","limit":60,"stroke":"black","strokeWidth":0.4},
+          "transform":[
+            {"window":[{"op":"row_number","as":"peak_row"}],"sort":[{"field":"Total","order":"descending"}],"groupby":["Item"]},
+            {"filter":"datum.peak_row == 1"}
+          ],
+          "encoding":{
+            "x":{"timeUnit":"yearmonth","field":"OrderDate"},
+            "y":{"aggregate":"sum","field":"Total","stack":"center"},
+            "text":{"field":"Item"},
+            "color":{"field":"Item","type":"nominal"}
+          }
+        }
+      ]
+    },
+    t3:{
+      "$schema":"https://vega.github.io/schema/vega-lite/v5.json",
+      "title": {
+  "text": "Unit Distribution by Item",
+        "subtitle": [
+          "Trellis view showing the frequency of units sold per order (Red line indicates mean)",
+          
+        ],
+  "fontSize": 24,
+  "subtitleFontSize": 14,
+  "anchor": "middle",
+  "offset": 20
+},
+      "data":{"values":values},
+      "facet":{"field":"Item","type":"nominal","columns":3},
+      "spec":{
+        "width":Math.floor(w)/2.2-40,"height":380,
+        "layer":[
+          {"mark":"bar","encoding":{"x":{"field":"Units","bin":true,"type":"quantitative","title":"Units"},"y":{"aggregate":"count","type":"quantitative"}}},
+          {"mark":{"type":"rule","color":"red","size":2},"encoding":{"x":{"aggregate":"mean","field":"Units","type":"quantitative"}}},
+          {
+            "mark":{"type":"text","align":"left","dx":5,"dy":-5,"color":"red","fontWeight":"bold","fontSize":11},
+            "encoding":{
+              "x":{"aggregate":"mean","field":"Units","type":"quantitative"},
+              "y":{"value":0},
+              "text":{"aggregate":"mean","field":"Units","type":"quantitative","format":".1f"}
+            }
+          }
+        ]
+      }
+    },
+    t4:{
+      "$schema":"https://vega.github.io/schema/vega-lite/v5.json",
+      "title": {
+  "text": "Price vs. Volume Analysis",
+        "subtitle": [
+          "Correlation between unit costs and quantities sold across regions",
+          "Hover over data points to see specific order dates and regional details"
+        ],
+  "fontSize": 24,
+  "subtitleFontSize": 14,
+  "anchor": "middle",
+  "offset": 20
+},
+      "data":{"values":values},
+      "width":w,"height":420,
+      "params":[{"name":"hover","select":{"type":"point","on":"mouseover"}}],
+      "mark":{"type":"point","filled":true},
+      "encoding":{
+        "x":{"field":"Units","type":"quantitative","title":"Units Sold"},
+        "y":{"field":"Unit Cost","type":"quantitative","title":"Cost ($)"},
+        "color":{"field":"Region","type":"nominal","legend":{"orient":"right"}},
+        "size":{"condition":{"param":"hover","empty":false,"value":150},"value":50},
+        "tooltip":[
+          {"field":"OrderDate","title":"Date","type":"temporal","format":"%b %d, %Y"},
+          {"field":"Region"},{"field":"Rep","title":"Rep"},{"field":"Item"},
+          {"field":"Units"},{"field":"Unit Cost","format":"$.2f"},{"field":"Total","format":"$.2f"}
+        ]
+      }
+    },
+    t5:{
+      "$schema":"https://vega.github.io/schema/vega-lite/v5.json",
+      "title": {
+  "text": "Regional Revenue Breakdown",
+        "subtitle": [
+          "Total sales volume categorized by geographical region",
+          "Switch to the Multiview Dashboard to filter all charts by Region"
+        ],
+  "fontSize": 24,
+  "subtitleFontSize": 14,
+  "anchor": "middle",
+  "offset": 20
+},
+      "data":{"values":values},
+      "width":w,"height":420,
+      "params":[{"name":"sel","select":{"type":"point","fields":["Region"]}}],
+      "mark":"bar",
+      "encoding":{
+        "x":{"field":"Region","type":"nominal"},
+        "y":{"aggregate":"sum","field":"Total","type":"quantitative"},
+        "color":{
+          "condition":{"param":"sel","field":"Region","type":"nominal","legend":null},
+          "value":"lightgray"
+        }
+      }
+    },
+    t6:{
+      "$schema":"https://vega.github.io/schema/vega-lite/v5.json",
+      "data":{"values":values},
+      "vconcat":[
+        {
+          "hconcat":[
+            {
+              "title":"Donut Chart: Rep vs Total",
+              "width":250,"height":250,
+              "transform":[
+                {"filter":{"param":"sel"}},
+                {"aggregate":[{"op":"sum","field":"Total","as":"TotalSum"}],"groupby":["Rep"]}
+              ],
+              "layer":[
+                {
+                  "mark":{"type":"arc","innerRadius":65,"stroke":"white"},
+                  "encoding":{
+                    "theta":{"field":"TotalSum","type":"quantitative","stack":true},
+                    "color":{"field":"Rep","type":"nominal","legend":null},
+                    "tooltip":[{"field":"Rep"},{"field":"TotalSum","title":"Total","format":"$.2f"}]
+                  }
+                },
+                {
+                  "mark":{"type":"text","angle":-45,"radius":80,"fontSize":9,"fontWeight":"bold","align":"center","baseline":"middle","stroke":"black","strokeWidth":0.4},
+                  "encoding":{
+                    "theta":{"field":"TotalSum","type":"quantitative","stack":true},
+                    "text":{"field":"Rep","type":"nominal"},
+                    "color":{"value":"white"}
+                  }
+                }
+              ]
+            },
+            {
+              "title":"Streamgraph: Total Variation per Item",
+              "width":500,"height":250,
+              "transform":[
+                {"filter":{"param":"sel"}},
+                {"impute":"Total","key":"OrderDate","groupby":["Item"],"value":0}
+              ],
+              "layer":[
+                {
+                  "mark":{"type":"area","interpolate":"monotone","stroke":"white","strokeWidth":1},
+                  "encoding":{
+                    "x":{"timeUnit":"yearmonth","field":"OrderDate","title":"Month"},
+                    "y":{"aggregate":"sum","field":"Total","stack":"center","axis":null},
+                    "color":{"field":"Item","type":"nominal","legend":null,"scale":{"scheme":"tableau20"}},
+                    "tooltip":[{"field":"Item"},{"field":"Total","aggregate":"sum","format":"$.2f"}]
+                  }
+                },
+                {
+                  "mark":{"type":"text","fontSize":12,"fontWeight":"bold","baseline":"middle","align":"center","limit":60,"stroke":"black","strokeWidth":0.4},
+                  "transform":[
+                    {"window":[{"op":"row_number","as":"peak_row"}],"sort":[{"field":"Total","order":"descending"}],"groupby":["Item"]},
+                    {"filter":"datum.peak_row == 1"}
+                  ],
+                  "encoding":{
+                    "x":{"timeUnit":"yearmonth","field":"OrderDate"},
+                    "y":{"aggregate":"sum","field":"Total","stack":"center"},
+                    "text":{"field":"Item"},
+                    "color":{"field":"Item","type":"nominal"}
+                  }
+                }
+              ]
+            }
+          ],
+          "spacing":20
+        },
+        {
+          "title":"Trellis Histogram: Units per Item (Red Line = Mean)",
+          "transform":[{"filter":{"param":"sel"}}],
+          "facet":{"field":"Item","type":"nominal","columns":5},
+          "spec":{
+            "width":140,"height":100,
+            "layer":[
+              {"mark":"bar","encoding":{"x":{"field":"Units","bin":true,"type":"quantitative","title":"Units"},"y":{"aggregate":"count","type":"quantitative"}}},
+              {"mark":{"type":"rule","color":"red","size":2},"encoding":{"x":{"aggregate":"mean","field":"Units","type":"quantitative"}}},
+              {
+                "mark":{"type":"text","align":"left","dx":5,"dy":-5,"color":"red","fontWeight":"bold","fontSize":10},
+                "encoding":{
+                  "x":{"aggregate":"mean","field":"Units","type":"quantitative"},
+                  "y":{"value":0},
+                  "text":{"aggregate":"mean","field":"Units","type":"quantitative","format":".1f"}
+                }
+              }
+            ]
+          }
+        },
+        {
+          "hconcat":[
+            {
+              "title":"Interactive Units vs Cost (Hover for Details)",
+              "width":350,"height":300,
+              "transform":[{"filter":{"param":"sel"}}],
+              "params":[{"name":"hover","select":{"type":"point","on":"mouseover"}}],
+              "mark":{"type":"point","filled":true},
+              "encoding":{
+                "x":{"field":"Units","type":"quantitative","title":"Units Sold"},
+                "y":{"field":"Unit Cost","type":"quantitative","title":"Cost ($)"},
+                "color":{"field":"Region","type":"nominal","legend":null},
+                "size":{"condition":{"param":"hover","empty":false,"value":150},"value":50},
+                "tooltip":[
+                  {"field":"OrderDate","title":"Date","type":"temporal","format":"%b %d, %Y"},
+                  {"field":"Region"},{"field":"Rep","title":"Rep"},{"field":"Item"},
+                  {"field":"Units"},{"field":"Unit Cost","format":"$.2f"},{"field":"Total","format":"$.2f"}
+                ]
+              }
+            },
+            {
+              "title":{"text":"Total Sales by Region","subtitle":"Click bars to filter the entire dashboard"},
+              "width":350,"height":300,
+              "params":[{"name":"sel","select":{"type":"point","fields":["Region"]}}],
+              "mark":"bar",
+              "encoding":{
+                "x":{"field":"Region","type":"nominal"},
+                "y":{"aggregate":"sum","field":"Total","type":"quantitative"},
+                "color":{
+                  "condition":{"param":"sel","field":"Region","type":"nominal","legend":null},
+                  "value":"lightgray"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "config":{"autosize":{"type":"pad","resize":true}}
+    }
+  };
+}
+
+const tabs=["t1","t2","t3","t4","t5","t6"];
+const done={};
+let cur=0;
+
+function show(id){
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelector(`[data-tab="${id}"]`).classList.add("active");
+  if(!done[id]){
+    done[id]=true;
+    /* measure width AFTER panel is visible */
+    requestAnimationFrame(()=>{
+      const w = getW();
+      const spec = makeSpecs(w)[id];
+      vegaEmbed("#"+id.replace("t","v"), spec, {mode:"vega-lite",actions:false}).catch(console.warn);
+    });
+  }
+}
+
+document.getElementById("tabBar").addEventListener("click",e=>{
+  const t=e.target.dataset.tab;
+  if(t){cur=tabs.indexOf(t);show(t);}
+});
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight"||e.key==="ArrowDown"){cur=(cur+1)%tabs.length;show(tabs[cur]);}
+  else if(e.key==="ArrowLeft"||e.key==="ArrowUp"){cur=(cur-1+tabs.length)%tabs.length;show(tabs[cur]);}
+});
+
+show("t1");
+</script>
